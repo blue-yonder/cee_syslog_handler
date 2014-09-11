@@ -2,6 +2,8 @@
 cee_syslog_handler
 ==================
 
+Pyhon Syslog Logging Handler with CEE Support
+
 Usage::
 
     from cee_syslog_handler import CeeSysLogHandler
