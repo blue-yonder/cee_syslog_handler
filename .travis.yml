@@ -1,0 +1,21 @@
+language: python
+python:
+  - '2.7'
+  - '3.4'
+install:
+  - pip install -r requirements_test.txt
+  - pip install coveralls
+  - python setup.py -q install
+script: 
+  - py.test --dropfirst --cov-config=.coveragerc --cov=sqlalchemy --dburi "${TESTDB#*=}"
+after_success: 
+  - coveralls
+#deploy:
+#  provider: pypi
+#  user: BY-jk
+#  password:
+#    secure: TODO 
+#  on:
+#    all_branches: true
+#    tags: true
+#    repo: blue-yonder/cee_syslog_handler
