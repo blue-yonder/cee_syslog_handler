@@ -7,7 +7,7 @@ install:
   - pip install coveralls
   - python setup.py -q install
 script: 
-  - py.test --dropfirst --cov-config=.coveragerc --cov=cee_syslog_handler
+  - python setup.py test
 after_success: 
   - coveralls
 #deploy:
