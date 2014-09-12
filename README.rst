@@ -23,6 +23,16 @@ Usage::
 Your project was successfully set up with PyScaffold 0.7.
 Following features are available:
 
+Installation
+============
+
+Install Package from https://pypi.python.org/pypi/cee_syslog_handler
+
+::
+    
+    pip install cee_syslog_handler
+
+
 Packaging
 =========
 
