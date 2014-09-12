@@ -10,12 +10,12 @@ script:
   - python setup.py test
 after_success: 
   - coveralls
-#deploy:
-#  provider: pypi
-#  user: BY-jk
-#  password:
-#    secure: TODO 
-#  on:
-#    all_branches: true
-#    tags: true
-#    repo: blue-yonder/cee_syslog_handler
+deploy:
+  provider: pypi
+  user: BY-jk
+  password:
+    secure: "TLQV/uNXEXyFQEoOEfDbkrC2VdPItY8vhd5BYW5kW+MprJ3rJDx69aGW9SWeV1u1l7JQ3qeausdnV8iZYJJk53yJdlHx4BxZWVoZeGxwhti7yH1R4y3qRx+AluTOTA5701GgHMG1QG/eDmnyDJfv5G1WmBe5Yuu/y6NFeZi6cNw="
+  on:
+    all_branches: true
+    tags: true
+    repo: blue-yonder/cee_syslog_handler
