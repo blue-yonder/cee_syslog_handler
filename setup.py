@@ -25,9 +25,9 @@ __location__ = os.path.join(os.getcwd(), os.path.dirname(
 MAIN_PACKAGE = "cee_syslog_handler"
 DESCRIPTION = "None"
 LICENSE = "new BSD"
-URL = "None"
-AUTHOR = "Peter Hoffmann"
-EMAIL = "ph@peter-hoffmann.com"
+URL = "https://github.com/blue-yonder/cee_syslog_handler"
+AUTHOR = "Blue Yonder GmbH"
+EMAIL = "peter.hoffmann@blue-yonder.com"
 
 COVERAGE_XML = False
 COVERAGE_HTML = False
