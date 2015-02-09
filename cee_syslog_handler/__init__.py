@@ -122,7 +122,7 @@ class CeeSysLogHandler(SysLogHandler):
 
     """
 
-    def __init__(self, address=('localhost', SYSLOG_UDP_PORT), socktype=None,
+    def __init__(self, address=('localhost', SYSLOG_UDP_PORT), socktype=socket.SOCK_DGRAM,
                  debugging_fields=True, extra_fields=True, facility=None):
         """
 
