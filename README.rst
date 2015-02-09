@@ -2,6 +2,10 @@
 cee_syslog_handler
 ==================
 
+.. image:: https://travis-ci.org/blue-yonder/cee_syslog_handler.svg?branch=master 
+    :target: https://travis-ci.org/blue-yonder/cee_syslog_handler
+
+
 Python Syslog Logging Handler with CEE Support
 
 Usage::
