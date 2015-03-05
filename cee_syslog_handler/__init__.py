@@ -80,10 +80,11 @@ def get_fields(message_dict, record):
 
     for key, value in record.__dict__.items():
         if key not in skip_fields and not key.startswith('_'):
-            if isinstance(value, basestring):
-                message_dict['_%s' % key] = value
-            else:
-                message_dict['_%s' % key] = repr(value)
+            try:
+                message_dict['_%s' % key] = float(value)
+            except ValueError:
+                message_dict['_%s' % key] = str(value)
+
     return message_dict
 
 
