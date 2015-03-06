@@ -11,10 +11,21 @@
 import sys
 import os
 import inspect
+from sphinx import apidoc
 
 
 __location__ = os.path.join(os.getcwd(), os.path.dirname(
     inspect.getfile(inspect.currentframe())))
+
+package = "cee_syslog_handler"
+namespace = []
+root_pkg = namespace[0] if namespace else package
+namespace_pkg = ".".join([namespace[-1], package]) if namespace else package
+output_dir = os.path.join(__location__, "../docs/_rst")
+module_dir = os.path.join(__location__, "..", root_pkg)
+cmd_line_template = "sphinx-apidoc -f -o {outputdir} {moduledir}"
+cmd_line = cmd_line_template.format(outputdir=output_dir, moduledir=module_dir)
+apidoc.main(cmd_line.split(" "))
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -111,7 +122,12 @@ html_theme = 'default'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-# html_title = None
+try:
+    from namespace_pkg import __version__ as version
+except ImportError:
+    pass
+else:
+    release = version
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 # html_short_title = None
@@ -226,4 +242,3 @@ intersphinx_mapping = {
 #    'pandas': ('http://pandas.pydata.org/pandas-docs/stable', None),
 #    'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
 }
-
