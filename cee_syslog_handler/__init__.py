@@ -7,8 +7,19 @@ from logging.handlers import SysLogHandler
 from logging.handlers import SYSLOG_UDP_PORT
 import json
 import socket
+import sys
 import traceback
 import logging
+
+
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    string_type = str
+    integer_type = int,
+else:
+    string_type = basestring
+    integer_type = (int, long)
 
 SYSLOG_LEVELS = {
     logging.CRITICAL: 2,
@@ -80,10 +91,14 @@ def get_fields(message_dict, record):
 
     for key, value in record.__dict__.items():
         if key not in skip_fields and not key.startswith('_'):
-            try:
-                message_dict['_%s' % key] = float(value)
-            except ValueError:
-                message_dict['_%s' % key] = str(value)
+            if not isinstance(value, (string_type, float) + integer_type):
+                try:
+                    value = str(value)
+                except:
+                    #make logging nothrow
+                    value = 'value could not be converted to str'
+
+            message_dict['_%s' % key] = value
 
     return message_dict
 
