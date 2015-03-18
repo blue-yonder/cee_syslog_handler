@@ -36,7 +36,7 @@ def get_full_message(exc_info, message):
 
 
 #see http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
-def make_message_dict(record, debugging_fields, extra_fields, fqdn, localname, facility=None):
+def make_message_dict(record, debugging_fields, extra_fields, fqdn, localname, facility):
     if fqdn:
         host = socket.getfqdn()
     elif localname:
@@ -159,5 +159,6 @@ class CeeSysLogHandler(SysLogHandler):
                                     self._debugging_fields,
                                     self._extra_fields,
                                     False,
+                                    None,
                                     self._facility)
         return ": @cee: %s" % json.dumps(message)
