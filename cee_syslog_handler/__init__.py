@@ -112,7 +112,9 @@ def _custom_key(key):
 
 #See http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
 def get_fields(message_dict, record):
-    for key, value in record.__dict__.items():
+    fields = record.__dict__
+    for key in sorted(fields.keys(), reverse=True):
+        value = fields[key]
         if key not in _SKIPPED_FIELDS:
             message_dict[_custom_key(key)] = _to_supported_output_type(value)
 

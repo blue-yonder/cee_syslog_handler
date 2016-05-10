@@ -33,6 +33,16 @@ def test_custom_field_with_leading_underscore():
     assert '"_custom_field": "custom value"' in handler.format(record)
 
 
+def test_custom_fields_with_underscores_have_precendence():
+    record = makeLogRecord( {'name':'my.package.logger'} )
+    record.foo = "should not appear in output"
+    record._foo = "has precedence"
+    handler = CeeSysLogHandler()
+
+    assert 'has precedence' in handler.format(record)
+    assert 'should not appear in output' not in handler.format(record)
+
+
 def test_id_field_not_supported():
     record = makeLogRecord( {'name':'my.package.logger'} )
     record.id = "custom value"
