@@ -5,6 +5,7 @@ del get_versions
 
 from logging.handlers import SysLogHandler
 from logging.handlers import SYSLOG_UDP_PORT
+from datetime import datetime
 import json
 import socket
 import sys
@@ -119,6 +120,36 @@ def get_fields(message_dict, record):
             message_dict[_custom_key(key)] = _to_supported_output_type(value)
 
     return message_dict
+
+
+class JsonFormatter(logging.Formatter):
+    def __init__(self, datefmt='%Y-%m-%dT%H:%M:%S.%f',
+                 debugging_fields=True,
+                 extra_fields=True):
+        """
+        :param datefmt: The date formatting
+        :param debugging_fields: Whether to include file, line number, function, process and thread id in the log
+        :param extra_fields: Whether to include extra fields (submitted via the keyword argument extra to a logger)
+                             in the log dictionary
+        :param facility: If not specified uses the logger's name as facility
+        """
+
+        self.datefmt = datefmt
+        self.debugging_fields = debugging_fields
+        self.extra_fields = extra_fields
+
+    def format(self, record):
+        record = make_message_dict(record,
+                                   debugging_fields=self.debugging_fields,
+                                   extra_fields=self.extra_fields,
+                                   fqdn=False,
+                                   localname=None,
+                                   facility=None)
+
+        record["timestamp"] = datetime.fromtimestamp(record["timestamp"]).strftime(self.datefmt)
+        del record["short_message"]
+        del record["source_facility"]
+        return json.dumps(record)
 
 
 class CeeSysLogHandler(SysLogHandler):
