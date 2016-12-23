@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.3.4
+-----
+*   Add JsonFormatter
+
 0.3.3
 -----
 
@@ -8,3 +12,19 @@ Changelog
     the log message. In case the (otherwise) same custom field exists both
     with and without leading underscore, the one with leading underscore has
     precedence. 
+
+0.3.2 (2015-03-18)
+------------------
+
+* Fix injection of custom facility
+
+0.3.1 (2015-03-09)
+------------------
+
+* Fix trove classifier syntax
+
+0.3.0 (2015-03-09)
+------------------
+
+* Add support for numeric types
+* Add tests

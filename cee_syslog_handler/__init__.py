@@ -123,6 +123,23 @@ def get_fields(message_dict, record):
 
 
 class JsonFormatter(logging.Formatter):
+    """ A Json Formatter for Python Logging
+    Usage:
+        import logging
+        from cee_syslog_handler import JsonFormatter
+
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.DEBUG)
+
+        fh = logging.FileHandler('spam.log')
+        fh.setLevel(logging.DEBUG)
+
+        fh.setFormatter(JsonFormatter())
+        logger.addHandler(fh)
+
+        logger.warn("foo")
+    """
+
     def __init__(self, datefmt='%Y-%m-%dT%H:%M:%S.%f',
                  debugging_fields=True,
                  extra_fields=True):
