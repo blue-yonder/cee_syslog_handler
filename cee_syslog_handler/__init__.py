@@ -228,3 +228,15 @@ class CeeSysLogHandler(SysLogHandler):
                                     None,
                                     self._facility)
         return ": @cee: %s" % json.dumps(message)
+
+
+class NamedCeeLogger(CeeSysLogHandler):
+
+    def __init__(self, address, socket_type, name):
+        super(NamedCeeLogger, self).__init__(address, socket_type)
+        self.name = name
+
+    def format(self, log_record):
+        log_record._name = self.name
+        return super(NamedCeeLogger, self).format(log_record)
+
