@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.4.0 (2017-05-27)
+-----
+*   Add NamedCeeLogger 
+
+
 0.3.4 (2016-12-23)
 -----
 *   Add JsonFormatter
