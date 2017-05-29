@@ -5,7 +5,6 @@ Changelog
 -----
 *   Add NamedCeeLogger 
 
-
 0.3.4 (2016-12-23)
 -----
 *   Add JsonFormatter
