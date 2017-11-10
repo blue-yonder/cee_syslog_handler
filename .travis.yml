@@ -2,13 +2,14 @@ language: python
 python:
   - '2.7'
   - '3.4'
+  - '3.6'
 install:
   - pip install -r requirements_test.txt
   - pip install coveralls
   - python setup.py -q install
-script: 
-  - python setup.py test
-after_success: 
+script:
+  - py.test --cov-report html --junit-xml junit.xml
+after_success:
   - coveralls
 deploy:
   provider: pypi

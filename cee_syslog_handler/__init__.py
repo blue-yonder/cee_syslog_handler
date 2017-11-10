@@ -1,8 +1,3 @@
-from ._version import get_versions
-
-__version__ = get_versions()['version']
-del get_versions
-
 from logging.handlers import SysLogHandler
 from logging.handlers import SYSLOG_UDP_PORT
 from datetime import datetime
