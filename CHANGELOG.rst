@@ -4,6 +4,8 @@ Changelog
 0.5.0 (UNRELEASED)
 ------------------
 
+*   The `host` field will now always contain the fully qualified domain name.
+*   Remove hardcoded `version` field.
 *   Remove support for Python 2.6.
 
 0.4.1 (2017-05-27)

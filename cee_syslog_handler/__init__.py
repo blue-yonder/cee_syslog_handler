@@ -46,16 +46,9 @@ def get_full_message(exc_info, message):
 
 
 #see http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
-def make_message_dict(record, debugging_fields, extra_fields, fqdn, localname, facility):
-    if fqdn:
-        host = socket.getfqdn()
-    elif localname:
-        host = localname
-    else:
-        host = socket.gethostname()
+def make_message_dict(record, debugging_fields, extra_fields, facility):
     message_dict = {
-        'version': "1.0",
-        'host': host,
+        'host': socket.getfqdn(),
         'short_message': record.getMessage(),
         'message': get_full_message(record.exc_info, record.getMessage()),
         'timestamp': record.created,
@@ -78,8 +71,10 @@ def make_message_dict(record, debugging_fields, extra_fields, fqdn, localname, f
             '_thread_name': record.threadName,
             '_process_name': record.processName
         })
+
     if extra_fields:
         message_dict = get_fields(message_dict, record)
+
     return message_dict
 
 
@@ -152,8 +147,6 @@ class JsonFormatter(logging.Formatter):
             record,
             debugging_fields=self.debugging_fields,
             extra_fields=self.extra_fields,
-            fqdn=False,
-            localname=None,
             facility=None)
 
         record["timestamp"] = datetime.fromtimestamp(record["timestamp"]).strftime(self.datefmt)
@@ -230,8 +223,6 @@ class CeeSysLogHandler(SysLogHandler):
             record,
             self._debugging_fields,
             self._extra_fields,
-            False,
-            None,
             self._facility)
         return ": @cee: %s" % json.dumps(message)
 
