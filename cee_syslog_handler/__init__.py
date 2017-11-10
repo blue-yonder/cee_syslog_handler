@@ -1,5 +1,4 @@
-from logging.handlers import SysLogHandler
-from logging.handlers import SYSLOG_UDP_PORT
+from logging.handlers import SysLogHandler, SYSLOG_UDP_PORT
 from datetime import datetime
 import json
 import socket
@@ -29,11 +28,10 @@ SYSLOG_LEVELS = {
 # The following fields are standard log record fields according to
 # http://docs.python.org/library/logging.html#logrecord-attributes
 # Hint: exc_text is a cache field used by the logging module
-_STANDARD_FIELDS = ('args', 'asctime', 'created', 'exc_info', 'exc_text',
-                  'filename', 'funcName', 'levelname', 'levelno',
-                  'lineno', 'module', 'msecs', 'message', 'msg', 'name',
-                  'pathname', 'process', 'processName', 'relativeCreated',
-                  'stack_info', 'thread', 'threadName')
+_STANDARD_FIELDS = ('args', 'asctime', 'created', 'exc_info', 'exc_text', 'filename', 'funcName',
+    'levelname', 'levelno', 'lineno', 'module', 'msecs', 'message', 'msg', 'name', 'pathname',
+    'process', 'processName', 'relativeCreated', 'stack_info', 'thread', 'threadName')
+
 
 # The GELF format does not support "_id" fields
 _SKIPPED_FIELDS = _STANDARD_FIELDS + ('id', '_id')
@@ -135,28 +133,31 @@ class JsonFormatter(logging.Formatter):
         logger.warn("foo")
     """
 
-    def __init__(self, datefmt='%Y-%m-%dT%H:%M:%S.%f',
-                 debugging_fields=True,
-                 extra_fields=True):
+    def __init__(
+            self,
+            datefmt='%Y-%m-%dT%H:%M:%S.%f',
+            debugging_fields=True,
+            extra_fields=True):
         """
         :param datefmt: The date formatting
-        :param debugging_fields: Whether to include file, line number, function, process and thread id in the log
-        :param extra_fields: Whether to include extra fields (submitted via the keyword argument extra to a logger)
-                             in the log dictionary
+        :param debugging_fields: Whether to include file, line number, function, process and thread
+            id in the log
+        :param extra_fields: Whether to include extra fields (submitted via the keyword argument
+            extra to a logger) in the log dictionary
         :param facility: If not specified uses the logger's name as facility
         """
-
         self.datefmt = datefmt
         self.debugging_fields = debugging_fields
         self.extra_fields = extra_fields
 
     def format(self, record):
-        record = make_message_dict(record,
-                                   debugging_fields=self.debugging_fields,
-                                   extra_fields=self.extra_fields,
-                                   fqdn=False,
-                                   localname=None,
-                                   facility=None)
+        record = make_message_dict(
+            record,
+            debugging_fields=self.debugging_fields,
+            extra_fields=self.extra_fields,
+            fqdn=False,
+            localname=None,
+            facility=None)
 
         record["timestamp"] = datetime.fromtimestamp(record["timestamp"]).strftime(self.datefmt)
         del record["short_message"]
@@ -166,16 +167,18 @@ class JsonFormatter(logging.Formatter):
 
 class CeeSysLogHandler(SysLogHandler):
     """
-    A syslog handler that formats extra fields as a CEE compatible structured log message. A CEE compatible message is
-    a syslog log entry that contains a cookie string "@cee:" in its message part. Everything behind the colon is
-    expected to be a JSON dictionary (containing no lists as children).
+    A syslog handler that formats extra fields as a CEE compatible structured log message. A CEE
+    compatible message is a syslog log entry that contains a cookie string "@cee:" in its message
+    part. Everything behind the colon is expected to be a JSON dictionary (containing no lists as
+    children).
 
     See the following links for the specification of the CEE syntax:
     http://www.rsyslog.com/doc/mmpstrucdata.html
     http://cee.mitre.org
     http://cee.mitre.org/language/1.0-beta1/clt.html#appendix-1-cee-over-syslog-transport-mapping
 
-    The handler is compatible to graypy and emits the same structured log messages as the graypy gelf handler does.
+    The handler is compatible to graypy and emits the same structured log messages as the graypy
+    gelf handler does.
 
     Usage::
 
@@ -199,29 +202,40 @@ class CeeSysLogHandler(SysLogHandler):
 
     """
 
-    def __init__(self, address=('localhost', SYSLOG_UDP_PORT), socktype=socket.SOCK_DGRAM,
-                 debugging_fields=True, extra_fields=True, facility=None):
+    def __init__(
+            self,
+            address=('localhost', SYSLOG_UDP_PORT),
+            socktype=socket.SOCK_DGRAM,
+            debugging_fields=True,
+            extra_fields=True,
+            facility=None):
         """
 
         :param address: Address of the syslog server (hostname, port)
-        :param socktype: If specified (socket.SOCK_DGRAM or socket.SOCK_STREAM) uses UDP or TCP respectively
-        :param debugging_fields: Whether to include file, line number, function, process and thread id in the log
-        :param extra_fields: Whether to include extra fields (submitted via the keyword argument extra to a logger)
-                             in the log dictionary
+        :param socktype: If specified (socket.SOCK_DGRAM or socket.SOCK_STREAM) uses UDP or TCP
+            respectively
+        :param debugging_fields: Whether to include file, line number, function, process and thread
+            id in the log
+        :param extra_fields: Whether to include extra fields (submitted via the keyword argument
+            extra to a logger) in the log dictionary
         :param facility: If not specified uses the logger's name as facility
         """
-        super(CeeSysLogHandler, self).__init__(address, facility=SysLogHandler.LOG_USER, socktype=socktype)
+        super(CeeSysLogHandler, self).__init__(
+            address,
+            facility=SysLogHandler.LOG_USER,
+            socktype=socktype)
         self._debugging_fields = debugging_fields
         self._extra_fields = extra_fields
         self._facility = facility
 
     def format(self, record):
-        message = make_message_dict(record,
-                                    self._debugging_fields,
-                                    self._extra_fields,
-                                    False,
-                                    None,
-                                    self._facility)
+        message = make_message_dict(
+            record,
+            self._debugging_fields,
+            self._extra_fields,
+            False,
+            None,
+            self._facility)
         return ": @cee: %s" % json.dumps(message)
 
 
