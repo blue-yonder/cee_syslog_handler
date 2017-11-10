@@ -4,6 +4,8 @@ Changelog
 0.5.0 (UNRELEASED)
 ------------------
 
+*   Remove support for Python 2.6.
+
 0.4.1 (2017-05-27)
 ------------------
 *   Add NamedCeeLogger

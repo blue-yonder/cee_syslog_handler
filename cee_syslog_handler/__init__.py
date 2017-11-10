@@ -76,11 +76,8 @@ def make_message_dict(record, debugging_fields, extra_fields, fqdn, localname, f
             '_function': record.funcName,
             '_pid': record.process,
             '_thread_name': record.threadName,
+            '_process_name': record.processName
         })
-        # record.processName was added in Python 2.6.2
-        pn = getattr(record, 'processName', None)
-        if pn is not None:
-            message_dict['_process_name'] = pn
     if extra_fields:
         message_dict = get_fields(message_dict, record)
     return message_dict
