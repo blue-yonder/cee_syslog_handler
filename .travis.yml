@@ -9,6 +9,7 @@ install:
   - python setup.py -q install
 script:
   - py.test --cov-report html --junit-xml junit.xml
+  - python setup.py sdist bdist_wheel
 after_success:
   - coveralls
 deploy:
