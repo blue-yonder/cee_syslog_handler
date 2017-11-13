@@ -2,7 +2,6 @@
 [run]
 branch = True
 source = cee_syslog_handler
-omit = */_version.py
 
 [report]
 # Regexes for lines to exclude from consideration
