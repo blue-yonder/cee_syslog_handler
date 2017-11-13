@@ -29,13 +29,13 @@ SYSLOG_LEVELS = {
 # The following fields are standard log record fields according to
 # http://docs.python.org/library/logging.html#logrecord-attributes
 # Hint: exc_text is a cache field used by the logging module
-_STANDARD_FIELDS = ('args', 'asctime', 'created', 'exc_info', 'exc_text', 'filename', 'funcName',
-    'levelname', 'levelno', 'lineno', 'module', 'msecs', 'message', 'msg', 'name', 'pathname',
-    'process', 'processName', 'relativeCreated', 'stack_info', 'thread', 'threadName')
+_STANDARD_FIELDS = set(('args', 'asctime', 'created', 'exc_info', 'exc_text', 'filename',
+    'funcName', 'levelname', 'levelno', 'lineno', 'module', 'msecs', 'message', 'msg', 'name',
+    'pathname', 'process', 'processName', 'relativeCreated', 'stack_info', 'thread', 'threadName'))
 
 
 # The GELF format does not support "_id" fields
-_SKIPPED_FIELDS = _STANDARD_FIELDS + ('id', '_id')
+_SKIPPED_FIELDS = _STANDARD_FIELDS | set(('id', '_id'))
 
 
 _SUPPORTED_OUTPUT_TYPES = (string_type, float) + integer_type
@@ -47,11 +47,12 @@ def get_full_message(exc_info, message):
 
 
 #see http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
-def make_message_dict(record, debugging_fields, extra_fields, facility, static_fields):
+def make_message_dict(record, fqdn, debugging_fields, extra_fields, facility, static_fields):
+    message = record.getMessage()
     message_dict = {
-        'host': socket.getfqdn(),
-        'short_message': record.getMessage(),
-        'message': get_full_message(record.exc_info, record.getMessage()),
+        'host': fqdn,
+        'short_message': message,
+        'message': get_full_message(record.exc_info, message),
         'timestamp': record.created,
         'level': SYSLOG_LEVELS.get(record.levelno, record.levelno),
         'facility': facility or record.name,
@@ -106,10 +107,11 @@ def _sanitize_fields(fields):
 #See http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
 def get_fields(message_dict, record):
     fields = record.__dict__
-    for key in sorted(fields.keys(), reverse=True):
+    unskipped_field_names = set(fields.keys()) - _SKIPPED_FIELDS
+
+    for key in sorted(unskipped_field_names, reverse=True):
         value = fields[key]
-        if key not in _SKIPPED_FIELDS:
-            message_dict[_custom_key(key)] = _to_supported_output_type(value)
+        message_dict[_custom_key(key)] = _to_supported_output_type(value)
 
     return message_dict
 
@@ -151,10 +153,12 @@ class JsonFormatter(logging.Formatter):
         self.debugging_fields = debugging_fields
         self.extra_fields = extra_fields
         self._static_fields = _sanitize_fields(kwargs)
+        self._fqdn = socket.getfqdn()
 
     def format(self, record):
         record = make_message_dict(
             record,
+            fqdn=self._fqdn,
             debugging_fields=self.debugging_fields,
             extra_fields=self.extra_fields,
             facility=None,
@@ -231,10 +235,12 @@ class CeeSysLogHandler(SysLogHandler):
         self._extra_fields = extra_fields
         self._facility = facility
         self._static_fields = _sanitize_fields(kwargs)
+        self._fqdn = socket.getfqdn()
 
     def format(self, record):
         message = make_message_dict(
             record,
+            self._fqdn,
             self._debugging_fields,
             self._extra_fields,
             self._facility,
