@@ -47,7 +47,7 @@ def get_full_message(exc_info, message):
 
 
 #see http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
-def make_message_dict(record, debugging_fields, extra_fields, facility):
+def make_message_dict(record, debugging_fields, extra_fields, facility, static_fields):
     message_dict = {
         'host': socket.getfqdn(),
         'short_message': record.getMessage(),
@@ -73,6 +73,8 @@ def make_message_dict(record, debugging_fields, extra_fields, facility):
             '_process_name': record.processName
         })
 
+    message_dict.update(static_fields)
+
     if extra_fields:
         message_dict = get_fields(message_dict, record)
 
@@ -95,6 +97,10 @@ def _custom_key(key):
         return key
     else:
         return '_{}'.format(key)
+
+
+def _sanitize_fields(fields):
+    return {_custom_key(k): _to_supported_output_type(v) for k, v in fields.items()}
 
 
 #See http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
@@ -130,7 +136,8 @@ class JsonFormatter(logging.Formatter):
             self,
             datefmt='%Y-%m-%dT%H:%M:%S.%f',
             debugging_fields=True,
-            extra_fields=True):
+            extra_fields=True,
+            **kwargs):
         """
         :param datefmt: The date formatting
         :param debugging_fields: Whether to include file, line number, function, process and thread
@@ -138,17 +145,20 @@ class JsonFormatter(logging.Formatter):
         :param extra_fields: Whether to include extra fields (submitted via the keyword argument
             extra to a logger) in the log dictionary
         :param facility: If not specified uses the logger's name as facility
+        :param kwargs: Additional static fields to be injected in each message.
         """
         self.datefmt = datefmt
         self.debugging_fields = debugging_fields
         self.extra_fields = extra_fields
+        self._static_fields = _sanitize_fields(kwargs)
 
     def format(self, record):
         record = make_message_dict(
             record,
             debugging_fields=self.debugging_fields,
             extra_fields=self.extra_fields,
-            facility=None)
+            facility=None,
+            static_fields=self._static_fields)
 
         record["timestamp"] = datetime.fromtimestamp(record["timestamp"]).strftime(self.datefmt)
         del record["short_message"]
@@ -199,7 +209,8 @@ class CeeSysLogHandler(SysLogHandler):
             socktype=socket.SOCK_DGRAM,
             debugging_fields=True,
             extra_fields=True,
-            facility=None):
+            facility=None,
+            **kwargs):
         """
 
         :param address: Address of the syslog server (hostname, port)
@@ -210,6 +221,7 @@ class CeeSysLogHandler(SysLogHandler):
         :param extra_fields: Whether to include extra fields (submitted via the keyword argument
             extra to a logger) in the log dictionary
         :param facility: If not specified uses the logger's name as facility
+        :param kwargs: Additional static fields to be injected in each message.
         """
         super(CeeSysLogHandler, self).__init__(
             address,
@@ -218,13 +230,15 @@ class CeeSysLogHandler(SysLogHandler):
         self._debugging_fields = debugging_fields
         self._extra_fields = extra_fields
         self._facility = facility
+        self._static_fields = _sanitize_fields(kwargs)
 
     def format(self, record):
         message = make_message_dict(
             record,
             self._debugging_fields,
             self._extra_fields,
-            self._facility)
+            self._facility,
+            self._static_fields)
         return ": @cee: %s" % json.dumps(message)
 
 

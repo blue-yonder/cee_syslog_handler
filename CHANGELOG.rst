@@ -4,6 +4,8 @@ Changelog
 0.5.0 (UNRELEASED)
 ------------------
 
+*   CeeSysLogHandler now supports custom static keyword arguments that will be
+    statically injected into each message. NamedCeeLogger is hereby deprecated.
 *   Add RegexFilter to suppress logging of messages containing the match of a
     a given regular expression.
 *   The `host` field will now always contain the fully qualified domain name.
