@@ -1,6 +1,7 @@
 from logging.handlers import SysLogHandler, SYSLOG_UDP_PORT
 from datetime import datetime
 import json
+import re
 import socket
 import sys
 import traceback
@@ -237,3 +238,21 @@ class NamedCeeLogger(CeeSysLogHandler):
         log_record._name = self.name
         return super(NamedCeeLogger, self).format(log_record)
 
+
+class RegexFilter(logging.Filter):
+    """
+    This Filter can be used to discard log messages that contain a match of
+    a given regular expression.
+    """
+    def __init__(self, filter_regex):
+        super(RegexFilter, self).__init__()
+        self._pattern = re.compile(filter_regex)
+
+    def filter(self, record):
+        """
+        Returns True if the record shall be logged. False otherwise.
+
+        https://github.com/python/cpython/blob/2.7/Lib/logging/__init__.py#L607
+        """
+        found = self._pattern.search(record.getMessage())
+        return not found

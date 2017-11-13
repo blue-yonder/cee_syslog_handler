@@ -4,6 +4,8 @@ Changelog
 0.5.0 (UNRELEASED)
 ------------------
 
+*   Add RegexFilter to suppress logging of messages containing the match of a
+    a given regular expression.
 *   The `host` field will now always contain the fully qualified domain name.
 *   Remove hardcoded `version` field.
 *   Remove support for Python 2.6.
