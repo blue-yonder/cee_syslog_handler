@@ -29,13 +29,13 @@ SYSLOG_LEVELS = {
 # The following fields are standard log record fields according to
 # http://docs.python.org/library/logging.html#logrecord-attributes
 # Hint: exc_text is a cache field used by the logging module
-_STANDARD_FIELDS = ('args', 'asctime', 'created', 'exc_info', 'exc_text', 'filename', 'funcName',
-    'levelname', 'levelno', 'lineno', 'module', 'msecs', 'message', 'msg', 'name', 'pathname',
-    'process', 'processName', 'relativeCreated', 'stack_info', 'thread', 'threadName')
+_STANDARD_FIELDS = set(('args', 'asctime', 'created', 'exc_info', 'exc_text', 'filename',
+    'funcName', 'levelname', 'levelno', 'lineno', 'module', 'msecs', 'message', 'msg', 'name',
+    'pathname', 'process', 'processName', 'relativeCreated', 'stack_info', 'thread', 'threadName'))
 
 
 # The GELF format does not support "_id" fields
-_SKIPPED_FIELDS = _STANDARD_FIELDS + ('id', '_id')
+_SKIPPED_FIELDS = _STANDARD_FIELDS | set(('id', '_id'))
 
 
 _SUPPORTED_OUTPUT_TYPES = (string_type, float) + integer_type
@@ -47,11 +47,12 @@ def get_full_message(exc_info, message):
 
 
 #see http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
-def make_message_dict(record, debugging_fields, extra_fields, facility):
+def make_message_dict(record, fqdn, debugging_fields, extra_fields, facility, static_fields):
+    message = record.getMessage()
     message_dict = {
-        'host': socket.getfqdn(),
-        'short_message': record.getMessage(),
-        'message': get_full_message(record.exc_info, record.getMessage()),
+        'host': fqdn,
+        'short_message': message,
+        'message': get_full_message(record.exc_info, message),
         'timestamp': record.created,
         'level': SYSLOG_LEVELS.get(record.levelno, record.levelno),
         'facility': facility or record.name,
@@ -72,6 +73,8 @@ def make_message_dict(record, debugging_fields, extra_fields, facility):
             '_thread_name': record.threadName,
             '_process_name': record.processName
         })
+
+    message_dict.update(static_fields)
 
     if extra_fields:
         message_dict = get_fields(message_dict, record)
@@ -97,13 +100,18 @@ def _custom_key(key):
         return '_{}'.format(key)
 
 
+def _sanitize_fields(fields):
+    return {_custom_key(k): _to_supported_output_type(v) for k, v in fields.items()}
+
+
 #See http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
 def get_fields(message_dict, record):
     fields = record.__dict__
-    for key in sorted(fields.keys(), reverse=True):
+    unskipped_field_names = set(fields.keys()) - _SKIPPED_FIELDS
+
+    for key in sorted(unskipped_field_names, reverse=True):
         value = fields[key]
-        if key not in _SKIPPED_FIELDS:
-            message_dict[_custom_key(key)] = _to_supported_output_type(value)
+        message_dict[_custom_key(key)] = _to_supported_output_type(value)
 
     return message_dict
 
@@ -130,7 +138,8 @@ class JsonFormatter(logging.Formatter):
             self,
             datefmt='%Y-%m-%dT%H:%M:%S.%f',
             debugging_fields=True,
-            extra_fields=True):
+            extra_fields=True,
+            **kwargs):
         """
         :param datefmt: The date formatting
         :param debugging_fields: Whether to include file, line number, function, process and thread
@@ -138,17 +147,22 @@ class JsonFormatter(logging.Formatter):
         :param extra_fields: Whether to include extra fields (submitted via the keyword argument
             extra to a logger) in the log dictionary
         :param facility: If not specified uses the logger's name as facility
+        :param kwargs: Additional static fields to be injected in each message.
         """
         self.datefmt = datefmt
         self.debugging_fields = debugging_fields
         self.extra_fields = extra_fields
+        self._static_fields = _sanitize_fields(kwargs)
+        self._fqdn = socket.getfqdn()
 
     def format(self, record):
         record = make_message_dict(
             record,
+            fqdn=self._fqdn,
             debugging_fields=self.debugging_fields,
             extra_fields=self.extra_fields,
-            facility=None)
+            facility=None,
+            static_fields=self._static_fields)
 
         record["timestamp"] = datetime.fromtimestamp(record["timestamp"]).strftime(self.datefmt)
         del record["short_message"]
@@ -199,7 +213,8 @@ class CeeSysLogHandler(SysLogHandler):
             socktype=socket.SOCK_DGRAM,
             debugging_fields=True,
             extra_fields=True,
-            facility=None):
+            facility=None,
+            **kwargs):
         """
 
         :param address: Address of the syslog server (hostname, port)
@@ -210,6 +225,7 @@ class CeeSysLogHandler(SysLogHandler):
         :param extra_fields: Whether to include extra fields (submitted via the keyword argument
             extra to a logger) in the log dictionary
         :param facility: If not specified uses the logger's name as facility
+        :param kwargs: Additional static fields to be injected in each message.
         """
         super(CeeSysLogHandler, self).__init__(
             address,
@@ -218,25 +234,24 @@ class CeeSysLogHandler(SysLogHandler):
         self._debugging_fields = debugging_fields
         self._extra_fields = extra_fields
         self._facility = facility
+        self._static_fields = _sanitize_fields(kwargs)
+        self._fqdn = socket.getfqdn()
 
     def format(self, record):
         message = make_message_dict(
             record,
+            self._fqdn,
             self._debugging_fields,
             self._extra_fields,
-            self._facility)
+            self._facility,
+            self._static_fields)
         return ": @cee: %s" % json.dumps(message)
 
 
 class NamedCeeLogger(CeeSysLogHandler):
 
     def __init__(self, address, socket_type, name):
-        super(NamedCeeLogger, self).__init__(address, socket_type)
-        self.name = name
-
-    def format(self, log_record):
-        log_record._name = self.name
-        return super(NamedCeeLogger, self).format(log_record)
+        super(NamedCeeLogger, self).__init__(address, socket_type, name=name)
 
 
 class RegexFilter(logging.Filter):
