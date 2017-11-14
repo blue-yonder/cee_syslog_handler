@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.5.0 (UNRELEASED)
+0.5.0 (2017-11-14)
 ------------------
 
 *   CeeSysLogHandler now supports custom static keyword arguments that will be
