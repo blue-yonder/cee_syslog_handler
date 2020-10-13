@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.6.0 (2020-10-13)
+------------------
+*   Add new filter redacting log messages according to a regex.
+
+
 0.5.0 (2017-11-14)
 ------------------
 

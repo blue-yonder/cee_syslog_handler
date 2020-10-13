@@ -271,3 +271,50 @@ class RegexFilter(logging.Filter):
         """
         found = self._pattern.search(record.getMessage())
         return not found
+
+
+class RegexRedactFilter(logging.Filter):
+    """
+    This filter redacts parts of log messages and exception traces
+    by substituting through a provided regular expression.
+    Use with caution: with great power comes great responsibility
+    """
+    def __init__(self, filter_regex=None,
+                 replace_string="<redacted>"):
+        super(RegexRedactFilter, self).__init__()
+        self._pattern = re.compile(filter_regex)
+        self._replacement = replace_string
+        # use methods from formatter to safely redact exception
+        # and stack traces
+        self._formatter = logging.Formatter()
+
+    def redact(self, string):
+        return re.sub(self._pattern, self._replacement, string)
+
+    def filter(self, record):
+        message = record.getMessage()
+        if not self._pattern.search(message)\
+                and not (record.exc_info or record.exc_text
+                         or record.stack_info):
+            return True
+
+        record.msg = self.redact(message)
+        record.args = ()
+
+        if record.exc_info:
+            # exc_info is a tuple based on sys.exc_info()
+            # (type, value, traceback)
+            record.msg = record.msg + "\n" \
+                         + self.redact(
+                            self._formatter.formatException(record.exc_info))
+            record.exc_info = None
+
+        if record.exc_text:
+            record.exc_text = self.redact(record.exc_text)
+
+        if hasattr(record, "stack_info") and record.stack_info:
+            record.msg = record.msg + "\n" \
+                         + self.redact(
+                            self._formatter.formatStack(record.stack_info))
+            record.stack_info = None
+        return True
