@@ -3,19 +3,8 @@ from datetime import datetime
 import json
 import re
 import socket
-import sys
 import traceback
 import logging
-
-
-PY3 = sys.version_info[0] == 3
-
-if PY3:
-    string_type = str
-    integer_type = int,
-else:
-    string_type = basestring
-    integer_type = (int, long)
 
 SYSLOG_LEVELS = {
     logging.CRITICAL: 2,
@@ -38,7 +27,7 @@ _STANDARD_FIELDS = set(('args', 'asctime', 'created', 'exc_info', 'exc_text', 'f
 _SKIPPED_FIELDS = _STANDARD_FIELDS | set(('id', '_id'))
 
 
-_SUPPORTED_OUTPUT_TYPES = (string_type, float) + integer_type
+_SUPPORTED_OUTPUT_TYPES = (str, float, int)
 
 
 #see http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
@@ -312,7 +301,7 @@ class RegexRedactFilter(logging.Filter):
         if record.exc_text:
             record.exc_text = self.redact(record.exc_text)
 
-        if hasattr(record, "stack_info") and record.stack_info:
+        if record.stack_info:
             record.msg = record.msg + "\n" \
                          + self.redact(
                             self._formatter.formatStack(record.stack_info))
