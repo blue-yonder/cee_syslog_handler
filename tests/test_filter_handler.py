@@ -3,7 +3,7 @@ from logging import makeLogRecord
 
 from cee_syslog_handler import NamedCeeLogger, RegexFilter, RegexRedactFilter
 
-_DUMMY_HOST = ('localhost', 1337)
+_DUMMY_HOST = ("localhost", 1337)
 _DUMMY_PROTOCOL = 2
 
 
@@ -18,36 +18,37 @@ class CollectingNamedCeeLogger(NamedCeeLogger):
 
 
 def test_filter():
-    filter_regex = r'/health|/metrics'
+    filter_regex = r"/health|/metrics"
 
-    handler = CollectingNamedCeeLogger(_DUMMY_HOST, _DUMMY_PROTOCOL, 'myname')
+    handler = CollectingNamedCeeLogger(_DUMMY_HOST, _DUMMY_PROTOCOL, "myname")
     handler.addFilter(RegexFilter(filter_regex))
 
-    handler.handle(makeLogRecord({'msg': 'POST /important/endpoint 200 OK'}))
-    assert len(handler.emitted_records) == 1 # record emitted
+    handler.handle(makeLogRecord({"msg": "POST /important/endpoint 200 OK"}))
+    assert len(handler.emitted_records) == 1  # record emitted
 
-    handler.handle(makeLogRecord({'msg': 'GET /health 200 OK'}))
-    assert len(handler.emitted_records) == 1 # no new record emitted
+    handler.handle(makeLogRecord({"msg": "GET /health 200 OK"}))
+    assert len(handler.emitted_records) == 1  # no new record emitted
 
-    handler.handle(makeLogRecord({'msg': 'GET /metrics 404'}))
-    assert len(handler.emitted_records) == 1 # no new record emitted
+    handler.handle(makeLogRecord({"msg": "GET /metrics 404"}))
+    assert len(handler.emitted_records) == 1  # no new record emitted
 
-    handler.handle(makeLogRecord({'msg': 'Eating vegetables is healthy and improves blood metrics'}))
-    assert len(handler.emitted_records) == 2 # new record emitted
+    handler.handle(
+        makeLogRecord(
+            {"msg": "Eating vegetables is healthy and improves blood metrics"}
+        )
+    )
+    assert len(handler.emitted_records) == 2  # new record emitted
 
 
 def test_redacting_filter():
-    regex = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+    regex = r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
     replace_string = "-#sensitive#-"
     string_to_be_redacted = "172.24.41.42"
 
     record = makeLogRecord(
-        {
-            'name': 'my.package.logger',
-            'msg': 'Connect by IP 172.24.41.42'
-        }
+        {"name": "my.package.logger", "msg": "Connect by IP 172.24.41.42"}
     )
-    handler = CollectingNamedCeeLogger(_DUMMY_HOST, _DUMMY_PROTOCOL, 'myname')
+    handler = CollectingNamedCeeLogger(_DUMMY_HOST, _DUMMY_PROTOCOL, "myname")
     handler.addFilter(
         RegexRedactFilter(filter_regex=regex, replace_string=replace_string)
     )
@@ -60,19 +61,19 @@ def test_redacting_filter():
 
 
 def test_redact_injected_variables():
-    regex = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+    regex = r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
     replace_string = "-#sensitive#-"
     string_to_be_redacted = "172.24.41.42"
 
     arbitrary_object = SomeClass("some 172.24.41.42 arbitrary object")
     record = makeLogRecord(
         {
-            'name': 'my.package.logger',
-            'msg': 'Connect %d by IP %s %s',
-            'args': (42, '172.24.41.42', arbitrary_object)
+            "name": "my.package.logger",
+            "msg": "Connect %d by IP %s %s",
+            "args": (42, "172.24.41.42", arbitrary_object),
         }
     )
-    handler = CollectingNamedCeeLogger(_DUMMY_HOST, _DUMMY_PROTOCOL, 'myname')
+    handler = CollectingNamedCeeLogger(_DUMMY_HOST, _DUMMY_PROTOCOL, "myname")
     handler.addFilter(
         RegexRedactFilter(filter_regex=regex, replace_string=replace_string)
     )
@@ -85,12 +86,12 @@ def test_redact_injected_variables():
 
 
 def test_redact_exception():
-    regex = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+    regex = r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
     replace_string = "-#sensitive#-"
     string_to_be_redacted = "172.24.41.42"
     logger = logging.getLogger(__name__)
 
-    handler = CollectingNamedCeeLogger(_DUMMY_HOST, _DUMMY_PROTOCOL, 'myname')
+    handler = CollectingNamedCeeLogger(_DUMMY_HOST, _DUMMY_PROTOCOL, "myname")
     handler.addFilter(
         RegexRedactFilter(filter_regex=regex, replace_string=replace_string)
     )
@@ -99,11 +100,7 @@ def test_redact_exception():
     arbitrary_object = SomeClass("some 172.24.41.42 arbitrary object")
 
     try:
-        raise MemoryError(
-            "something bad: ",
-            string_to_be_redacted,
-            arbitrary_object
-        )
+        raise MemoryError("something bad: ", string_to_be_redacted, arbitrary_object)
     except MemoryError as e:
         logger.exception(e)
 
@@ -114,12 +111,12 @@ def test_redact_exception():
 
 
 def test_redact_objects():
-    regex = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+    regex = r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
     replace_string = "-#sensitive#-"
     string_to_be_redacted = "172.24.41.42"
 
     logger = logging.getLogger(__name__)
-    handler = CollectingNamedCeeLogger(_DUMMY_HOST, _DUMMY_PROTOCOL, 'myname')
+    handler = CollectingNamedCeeLogger(_DUMMY_HOST, _DUMMY_PROTOCOL, "myname")
     handler.addFilter(
         RegexRedactFilter(filter_regex=regex, replace_string=replace_string)
     )
@@ -135,12 +132,12 @@ def test_redact_objects():
 
 
 def test_exception_not_in_message():
-    regex = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+    regex = r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
     replace_string = "-#sensitive#-"
     string_to_be_redacted = "172.24.41.42"
     logger = logging.getLogger(__name__)
 
-    handler = CollectingNamedCeeLogger(_DUMMY_HOST, _DUMMY_PROTOCOL, 'myname')
+    handler = CollectingNamedCeeLogger(_DUMMY_HOST, _DUMMY_PROTOCOL, "myname")
     handler.addFilter(
         RegexRedactFilter(filter_regex=regex, replace_string=replace_string)
     )
@@ -158,18 +155,18 @@ def test_exception_not_in_message():
 
 
 def test_exc_text_redaction():
-    regex = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+    regex = r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
     replace_string = "-#sensitive#-"
     string_to_be_redacted = "172.24.41.42"
 
     record = makeLogRecord(
         {
-            'name': 'my.package.logger',
-            'msg': 'Connect by IP 172.24.41.42',
-            'exc_text': 'something 192.168.0.1 something'
+            "name": "my.package.logger",
+            "msg": "Connect by IP 172.24.41.42",
+            "exc_text": "something 192.168.0.1 something",
         }
     )
-    handler = CollectingNamedCeeLogger(_DUMMY_HOST, _DUMMY_PROTOCOL, 'myname')
+    handler = CollectingNamedCeeLogger(_DUMMY_HOST, _DUMMY_PROTOCOL, "myname")
     handler.addFilter(
         RegexRedactFilter(filter_regex=regex, replace_string=replace_string)
     )
@@ -204,6 +201,7 @@ class SomeClass:
     """
     generic helper class
     """
+
     def __init__(self, message):
         self.message = message
 
