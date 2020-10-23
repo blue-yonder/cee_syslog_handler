@@ -1,21 +1,10 @@
-from logging.handlers import SysLogHandler, SYSLOG_UDP_PORT
-from datetime import datetime
 import json
+import logging
 import re
 import socket
-import sys
 import traceback
-import logging
-
-
-PY3 = sys.version_info[0] == 3
-
-if PY3:
-    string_type = str
-    integer_type = int,
-else:
-    string_type = basestring
-    integer_type = (int, long)
+from datetime import datetime
+from logging.handlers import SYSLOG_UDP_PORT, SysLogHandler
 
 SYSLOG_LEVELS = {
     logging.CRITICAL: 2,
@@ -29,50 +18,75 @@ SYSLOG_LEVELS = {
 # The following fields are standard log record fields according to
 # http://docs.python.org/library/logging.html#logrecord-attributes
 # Hint: exc_text is a cache field used by the logging module
-_STANDARD_FIELDS = set(('args', 'asctime', 'created', 'exc_info', 'exc_text', 'filename',
-    'funcName', 'levelname', 'levelno', 'lineno', 'module', 'msecs', 'message', 'msg', 'name',
-    'pathname', 'process', 'processName', 'relativeCreated', 'stack_info', 'thread', 'threadName'))
+_STANDARD_FIELDS = set(
+    (
+        "args",
+        "asctime",
+        "created",
+        "exc_info",
+        "exc_text",
+        "filename",
+        "funcName",
+        "levelname",
+        "levelno",
+        "lineno",
+        "module",
+        "msecs",
+        "message",
+        "msg",
+        "name",
+        "pathname",
+        "process",
+        "processName",
+        "relativeCreated",
+        "stack_info",
+        "thread",
+        "threadName",
+    )
+)
 
 
 # The GELF format does not support "_id" fields
-_SKIPPED_FIELDS = _STANDARD_FIELDS | set(('id', '_id'))
+_SKIPPED_FIELDS = _STANDARD_FIELDS | set(("id", "_id"))
 
 
-_SUPPORTED_OUTPUT_TYPES = (string_type, float) + integer_type
+_SUPPORTED_OUTPUT_TYPES = (str, float, int)
 
 
-#see http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
+# see http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
 def get_full_message(exc_info, message):
-    return '\n'.join(traceback.format_exception(*exc_info)) if exc_info else message
+    return "\n".join(traceback.format_exception(*exc_info)) if exc_info else message
 
 
-#see http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
-def make_message_dict(record, fqdn, debugging_fields, extra_fields, facility, static_fields):
+# see http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
+def make_message_dict(
+    record, fqdn, debugging_fields, extra_fields, facility, static_fields
+):
     message = record.getMessage()
     message_dict = {
-        'host': fqdn,
-        'short_message': message,
-        'message': get_full_message(record.exc_info, message),
-        'timestamp': record.created,
-        'level': SYSLOG_LEVELS.get(record.levelno, record.levelno),
-        'facility': facility or record.name,
-        'source_facility': facility or record.name,
+        "host": fqdn,
+        "short_message": message,
+        "message": get_full_message(record.exc_info, message),
+        "timestamp": record.created,
+        "level": SYSLOG_LEVELS.get(record.levelno, record.levelno),
+        "facility": facility or record.name,
+        "source_facility": facility or record.name,
     }
 
     if facility is not None:
-        message_dict.update({
-            '_logger': record.name
-        })
+        message_dict.update({"_logger": record.name})
 
     if debugging_fields:
-        message_dict.update({
-            'file': record.pathname,
-            'line': record.lineno,
-            '_function': record.funcName,
-            '_pid': record.process,
-            '_thread_name': record.threadName,
-            '_process_name': record.processName
-        })
+        message_dict.update(
+            {
+                "file": record.pathname,
+                "line": record.lineno,
+                "_function": record.funcName,
+                "_pid": record.process,
+                "_thread_name": record.threadName,
+                "_process_name": record.processName,
+            }
+        )
 
     message_dict.update(static_fields)
 
@@ -87,24 +101,24 @@ def _to_supported_output_type(value):
         try:
             return str(value)
         except:
-            #make logging nothrow
-            return 'value could not be converted to str'
+            # make logging nothrow
+            return "value could not be converted to str"
     else:
         return value
 
 
 def _custom_key(key):
-    if key.startswith('_'):
+    if key.startswith("_"):
         return key
     else:
-        return '_{}'.format(key)
+        return "_{}".format(key)
 
 
 def _sanitize_fields(fields):
     return {_custom_key(k): _to_supported_output_type(v) for k, v in fields.items()}
 
 
-#See http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
+# See http://github.com/hoffmann/graypy/blob/master/graypy/handler.py
 def get_fields(message_dict, record):
     fields = record.__dict__
     unskipped_field_names = set(fields.keys()) - _SKIPPED_FIELDS
@@ -135,11 +149,12 @@ class JsonFormatter(logging.Formatter):
     """
 
     def __init__(
-            self,
-            datefmt='%Y-%m-%dT%H:%M:%S.%f',
-            debugging_fields=True,
-            extra_fields=True,
-            **kwargs):
+        self,
+        datefmt="%Y-%m-%dT%H:%M:%S.%f",
+        debugging_fields=True,
+        extra_fields=True,
+        **kwargs
+    ):
         """
         :param datefmt: The date formatting
         :param debugging_fields: Whether to include file, line number, function, process and thread
@@ -162,9 +177,12 @@ class JsonFormatter(logging.Formatter):
             debugging_fields=self.debugging_fields,
             extra_fields=self.extra_fields,
             facility=None,
-            static_fields=self._static_fields)
+            static_fields=self._static_fields,
+        )
 
-        record["timestamp"] = datetime.fromtimestamp(record["timestamp"]).strftime(self.datefmt)
+        record["timestamp"] = datetime.fromtimestamp(record["timestamp"]).strftime(
+            self.datefmt
+        )
         del record["short_message"]
         del record["source_facility"]
         return json.dumps(record)
@@ -208,13 +226,14 @@ class CeeSysLogHandler(SysLogHandler):
     """
 
     def __init__(
-            self,
-            address=('localhost', SYSLOG_UDP_PORT),
-            socktype=socket.SOCK_DGRAM,
-            debugging_fields=True,
-            extra_fields=True,
-            facility=None,
-            **kwargs):
+        self,
+        address=("localhost", SYSLOG_UDP_PORT),
+        socktype=socket.SOCK_DGRAM,
+        debugging_fields=True,
+        extra_fields=True,
+        facility=None,
+        **kwargs
+    ):
         """
 
         :param address: Address of the syslog server (hostname, port)
@@ -228,9 +247,8 @@ class CeeSysLogHandler(SysLogHandler):
         :param kwargs: Additional static fields to be injected in each message.
         """
         super(CeeSysLogHandler, self).__init__(
-            address,
-            facility=SysLogHandler.LOG_USER,
-            socktype=socktype)
+            address, facility=SysLogHandler.LOG_USER, socktype=socktype
+        )
         self._debugging_fields = debugging_fields
         self._extra_fields = extra_fields
         self._facility = facility
@@ -244,12 +262,12 @@ class CeeSysLogHandler(SysLogHandler):
             self._debugging_fields,
             self._extra_fields,
             self._facility,
-            self._static_fields)
+            self._static_fields,
+        )
         return ": @cee: %s" % json.dumps(message)
 
 
 class NamedCeeLogger(CeeSysLogHandler):
-
     def __init__(self, address, socket_type, name):
         super(NamedCeeLogger, self).__init__(address, socket_type, name=name)
 
@@ -259,6 +277,7 @@ class RegexFilter(logging.Filter):
     This Filter can be used to discard log messages that contain a match of
     a given regular expression.
     """
+
     def __init__(self, filter_regex):
         super(RegexFilter, self).__init__()
         self._pattern = re.compile(filter_regex)
@@ -271,3 +290,54 @@ class RegexFilter(logging.Filter):
         """
         found = self._pattern.search(record.getMessage())
         return not found
+
+
+class RegexRedactFilter(logging.Filter):
+    """
+    This filter redacts parts of log messages and exception traces
+    by substituting through a provided regular expression.
+    Use with caution: with great power comes great responsibility
+    """
+
+    def __init__(self, filter_regex=None, replace_string="<redacted>"):
+        super(RegexRedactFilter, self).__init__()
+        self._pattern = re.compile(filter_regex)
+        self._replacement = replace_string
+        # use methods from formatter to safely redact exception
+        # and stack traces
+        self._formatter = logging.Formatter()
+
+    def redact(self, string):
+        return re.sub(self._pattern, self._replacement, string)
+
+    def filter(self, record):
+        message = record.getMessage()
+        if not self._pattern.search(message) and not (
+            record.exc_info or record.exc_text or record.stack_info
+        ):
+            return True
+
+        record.msg = self.redact(message)
+        record.args = ()
+
+        if record.exc_info:
+            # exc_info is a tuple based on sys.exc_info()
+            # (type, value, traceback)
+            record.msg = (
+                record.msg
+                + "\n"
+                + self.redact(self._formatter.formatException(record.exc_info))
+            )
+            record.exc_info = None
+
+        if record.exc_text:
+            record.exc_text = self.redact(record.exc_text)
+
+        if record.stack_info:
+            record.msg = (
+                record.msg
+                + "\n"
+                + self.redact(self._formatter.formatStack(record.stack_info))
+            )
+            record.stack_info = None
+        return True
