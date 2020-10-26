@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.6.0 (UNRELEASED)
+0.6.0 (2020-10-26)
 ------------------
 *   Add new filter redacting log messages according to a regex.
 *   Remove support for Python 2 and Python 3.4.
